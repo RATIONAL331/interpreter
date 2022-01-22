@@ -39,8 +39,16 @@ type LetStatement struct {
 	Value Expression
 }
 
+type ReturnStatement struct {
+	Token       token.Token
+	ReturnValue Expression
+}
+
 func (ls *LetStatement) statementNode()       {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
+
+func (ls *ReturnStatement) statementNode()       {}
+func (ls *ReturnStatement) TokenLiteral() string { return ls.Token.Literal }
 
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
