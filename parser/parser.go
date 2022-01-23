@@ -7,11 +7,30 @@ import (
 	"interpreter/token"
 )
 
+const ( // 우선순위
+	_ int = iota
+	LOWEST
+	EQUALS
+	LESSGREATER // < or >
+	SUM
+	PRODUCT
+	PREFIX
+	CALL
+)
+
+type (
+	prefixParseFn func() ast.Expression
+	infixParseFn  func(ast.Expression) ast.Expression // 인자는 중위연산자 좌측에 위치
+)
+
 type Parser struct {
 	l         *lexer.Lexer
 	curToken  token.Token
 	peekToken token.Token
 	errors    []string
+
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -36,6 +55,14 @@ func (p *Parser) Errors() []string {
 func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -109,4 +136,23 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {
 	return p.curToken.Type == t
+}
+
+func (p *Parser) parseExpressionStatement() ast.Statement {
+	statement := &ast.ExpressionStatement{Token: p.curToken}
+	statement.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) { // 세미콜론은 선택적
+		p.nextToken()
+	}
+	return statement
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		return nil
+	}
+	leftExpression := prefix()
+	return leftExpression
 }

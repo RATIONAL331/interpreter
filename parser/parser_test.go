@@ -3,6 +3,7 @@ package parser
 import (
 	"interpreter/ast"
 	"interpreter/lexer"
+	"interpreter/token"
 	"testing"
 )
 
@@ -101,5 +102,47 @@ return 993322;`
 			t.Errorf("returnStatement.TokenLiteral not 'return', got=%q", returnStatement.TokenLiteral())
 			continue
 		}
+	}
+}
+
+func TestIdeentifierExpression(t *testing.T) {
+	input := "foobar;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statments. got=%d", len(program.Statements))
+	}
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	identifier, ok := statement.Expression.(*ast.Identifier)
+	if !ok {
+		t.Fatalf("exp not *ast.Identifier. got=%T", statement.Expression)
+	}
+
+	if identifier.Value != "foobar" {
+		t.Errorf("ident.Value not %s. got=%s", "foobar", identifier.Value)
+	}
+
+	if identifier.TokenLiteral() != "foobar" {
+		t.Errorf("ident.TokenLiteral not %s. got=%s", "foobar", identifier.TokenLiteral())
+	}
+
+}
+
+func (p *Parser) parseStatement() ast.Statement {
+	switch p.curToken.Type {
+	case token.LET:
+		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatement()
+	default:
+		return p.parseExpressionStatement()
 	}
 }
