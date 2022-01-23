@@ -3,7 +3,6 @@ package parser
 import (
 	"interpreter/ast"
 	"interpreter/lexer"
-	"interpreter/token"
 	"testing"
 )
 
@@ -105,7 +104,7 @@ return 993322;`
 	}
 }
 
-func TestIdeentifierExpression(t *testing.T) {
+func TestIdentifierExpression(t *testing.T) {
 	input := "foobar;"
 
 	l := lexer.New(input)
@@ -134,15 +133,4 @@ func TestIdeentifierExpression(t *testing.T) {
 		t.Errorf("ident.TokenLiteral not %s. got=%s", "foobar", identifier.TokenLiteral())
 	}
 
-}
-
-func (p *Parser) parseStatement() ast.Statement {
-	switch p.curToken.Type {
-	case token.LET:
-		return p.parseLetStatement()
-	case token.RETURN:
-		return p.parseReturnStatement()
-	default:
-		return p.parseExpressionStatement()
-	}
 }
