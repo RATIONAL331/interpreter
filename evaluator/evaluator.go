@@ -91,7 +91,7 @@ func evalProgram(node *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
 
 	for _, statement := range node.Statements {
-		result := Eval(statement, env)
+		result = Eval(statement, env)
 
 		switch result := result.(type) {
 		case *object.ReturnValue:
@@ -221,16 +221,4 @@ func nativeBoolToBooleanObject(value bool) *object.Boolean {
 
 func newError(format string, a ...interface{}) *object.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
-}
-
-func evalStatements(statements []ast.Statement, env *object.Environment) object.Object {
-	var result object.Object
-	for _, statement := range statements {
-		result = Eval(statement, env)
-
-		if returnValue, ok := result.(*object.ReturnValue); ok {
-			return returnValue.Value
-		}
-	}
-	return result
 }
