@@ -218,7 +218,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 }
 
-func testIntegerLiteral(t *testing.T, il ast.Expression, value interface{}) bool {
+func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	integer, ok := il.(*ast.IntegerLiteral)
 
 	if !ok {
@@ -649,6 +649,30 @@ func TestStringLiteralExpression(t *testing.T) {
 	if literal.Value != "hello world" {
 		t.Errorf("literal.VAlue not %q. got=%q", "hello world", literal.Value)
 	}
+}
+
+func TestParsingArrayLiteral(t *testing.T) {
+	input := "[1, 2 * 3, 3 + 3];"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	statement := program.Statements[0].(*ast.ExpressionStatement)
+	array, ok := statement.Expression.(*ast.ArrayLiteral)
+
+	if !ok {
+		t.Fatalf("exp not ast.ArrayLiteral. got=%T", statement.Expression)
+	}
+
+	if len(array.Elements) != 3 {
+		t.Fatalf("len(array.Elements) not 3. got=%d", len(array.Elements))
+	}
+
+	testIntegerLiteral(t, array.Elements[0], 1)
+	testInfixExpression(t, array.Elements[1], 2, "*", 3)
+	testInfixExpression(t, array.Elements[2], 3, "+", 3)
 }
 
 func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
