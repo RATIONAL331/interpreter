@@ -98,6 +98,14 @@ var builtins = map[string]*object.Builtin{
 			return &object.Array{Elements: newElements}
 		},
 	},
+	"puts": {
+		Fn: func(args ...object.Object) object.Object {
+			for _, arg := range args {
+				_ = fmt.Sprintf(arg.Inspect())
+			}
+			return NULL
+		},
+	},
 }
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
