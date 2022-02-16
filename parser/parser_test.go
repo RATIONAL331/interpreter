@@ -707,6 +707,110 @@ func TestTestParsingIndexExpression(t *testing.T) {
 	}
 
 }
+func TestParsingHashLiteralStringKeys(t *testing.T) {
+	input := `{"one":1, "two":2, "three":3};`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	statement := program.Statements[0].(*ast.ExpressionStatement)
+	hash, ok := statement.Expression.(*ast.HashLiteral)
+
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", statement.Expression)
+	}
+
+	if len(hash.Pairs) != 3 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+
+	expected := map[string]int64{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+
+	for key, value := range hash.Pairs {
+		expectedKey, ok := key.(*ast.StringLiteral)
+		if !ok {
+			t.Errorf("key is not ast.StringLiteral. got=%T", key)
+		}
+
+		expectedValue := expected[expectedKey.String()]
+
+		testIntegerLiteral(t, value, expectedValue)
+	}
+}
+
+func TestParsingEmptyHashLiteral(t *testing.T) {
+	input := `{};`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	statement := program.Statements[0].(*ast.ExpressionStatement)
+	hash, ok := statement.Expression.(*ast.HashLiteral)
+
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", statement.Expression)
+	}
+
+	if len(hash.Pairs) != 0 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+}
+
+func TestParsingHashLiteralWithExpression(t *testing.T) {
+	input := `{"one": 0 + 1, "two" : 10 - 8, "three" : 15 / 5};`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	statement := program.Statements[0].(*ast.ExpressionStatement)
+	hash, ok := statement.Expression.(*ast.HashLiteral)
+
+	if !ok {
+		t.Fatalf("exp is not ast.HashLiteral. got=%T", statement.Expression)
+	}
+
+	if len(hash.Pairs) != 3 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+
+	expected := map[string]func(expression ast.Expression){
+		"one": func(e ast.Expression) {
+			testInfixExpression(t, e, 0, "+", 1)
+		},
+		"two": func(e ast.Expression) {
+			testInfixExpression(t, e, 10, "-", 8)
+		},
+		"three": func(e ast.Expression) {
+			testInfixExpression(t, e, 15, "/", 5)
+		},
+	}
+
+	for key, value := range hash.Pairs {
+		expectedKey, ok := key.(*ast.StringLiteral)
+		if !ok {
+			t.Errorf("key is not ast.StringLiteral. got=%T", key)
+			continue
+		}
+
+		testFunc, ok := expected[expectedKey.String()]
+		if !ok {
+			t.Errorf("No test function for key %q found", expectedKey.String())
+			continue
+		}
+
+		testFunc(value)
+	}
+}
 
 func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 	ident, ok := exp.(*ast.Identifier)
