@@ -61,6 +61,29 @@ let mymacro = macro(x, y) { x + y; };
 	}
 }
 
+func TestExpandMacros(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`let infixExpression = macro() { quote(1 + 2); }; infixExpression();`, `(1 + 2)`},
+		{`let reverse = macro(a, b) { quote(unquote(b) - unquote(a)); }; reverse(2 + 2, 10 - 5);`, `(10 - 5) - (2 + 2)`},
+	}
+
+	for _, test := range tests {
+		expected := testParseProgram(test.expected)
+		program := testParseProgram(test.input)
+
+		environment := object.NewEnvironment()
+		DefineMacros(program, environment)
+		expanded := ExpandMacros(program, environment)
+
+		if expanded.String() != expected.String() {
+			t.Errorf("not equal. want=%q, got=%q", expected.Statements, expanded.String())
+		}
+	}
+}
+
 func testParseProgram(input string) *ast.Program {
 	l := lexer.New(input)
 	p := parser.New(l)
