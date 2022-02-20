@@ -21,6 +21,7 @@ const (
 	BUILTIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
 	HASH_OBJ         = "HASH"
+	QUOTE_OBJ        = "QUOTE"
 )
 
 type Object interface {
@@ -82,6 +83,10 @@ type HashKey struct {
 type HashPair struct {
 	Key   Object
 	Value Object
+}
+
+type Quote struct {
+	Node ast.Node
 }
 
 func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
@@ -174,3 +179,6 @@ func (h *Hash) Inspect() string {
 
 	return out.String()
 }
+
+func (q *Quote) Type() ObjectType { return QUOTE_OBJ }
+func (q *Quote) Inspect() string  { return "QUOTE(" + q.Node.String() + ")" }
