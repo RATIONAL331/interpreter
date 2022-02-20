@@ -22,6 +22,7 @@ const (
 	ARRAY_OBJ        = "ARRAY"
 	HASH_OBJ         = "HASH"
 	QUOTE_OBJ        = "QUOTE"
+	MACRO_OBJ        = "MACRO"
 )
 
 type Object interface {
@@ -87,6 +88,12 @@ type HashPair struct {
 
 type Quote struct {
 	Node ast.Node
+}
+
+type Macro struct {
+	Parameters []*ast.Identifier
+	Body       *ast.BlockStatement
+	Env        *Environment
 }
 
 func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
@@ -182,3 +189,22 @@ func (h *Hash) Inspect() string {
 
 func (q *Quote) Type() ObjectType { return QUOTE_OBJ }
 func (q *Quote) Inspect() string  { return "QUOTE(" + q.Node.String() + ")" }
+
+func (m *Macro) Type() ObjectType { return MACRO_OBJ }
+func (m *Macro) Inspect() string {
+	var out bytes.Buffer
+
+	var params []string
+	for _, param := range m.Parameters {
+		params = append(params, param.String())
+	}
+
+	out.WriteString("macro")
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(") {\n")
+	out.WriteString(m.Body.String())
+	out.WriteString("\n}")
+
+	return out.String()
+}
