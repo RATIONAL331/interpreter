@@ -131,6 +131,12 @@ type HashLiteral struct {
 	Pairs map[Expression]Expression
 }
 
+type MacroLiteral struct {
+	Token      token.Token
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
 func (ls *LetStatement) statementNode()       {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 func (ls *LetStatement) String() string {
@@ -324,6 +330,25 @@ func (hl *HashLiteral) String() string {
 	out.WriteString("{")
 	out.WriteString(strings.Join(pairs, ", "))
 	out.WriteString("}")
+
+	return out.String()
+}
+
+func (ml *MacroLiteral) expressionNode()      {}
+func (ml *MacroLiteral) TokenLiteral() string { return ml.Token.Literal }
+func (ml *MacroLiteral) String() string {
+	var out bytes.Buffer
+
+	var params []string
+	for _, param := range ml.Parameters {
+		params = append(params, param.String())
+	}
+
+	out.WriteString(ml.TokenLiteral())
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(") ")
+	out.WriteString(ml.Body.String())
 
 	return out.String()
 }
